@@ -111,7 +111,7 @@ module.exports.ironicnodePatch = function ironicnodePatch(req, res, next) {
     ironic.get_client(function (client) {
         var data = JSON.stringify(req.body);
         client.patch_node(req.swagger.params.identifier.value, data, function (result) {
-            console.info('\r\patched node:\r\n' + result);
+            console.log('\r\patched node:\r\n' + result);
             if (result) {
                 res.setHeader('Content-Type', 'application/json');
                 res.end(result);
@@ -277,7 +277,7 @@ module.exports.registerpost = function registerpost(req, res, next) {
                     var memory_device = dmi.data['Memory Device'];
                     for (var elem in memory_device) {
                         var item = memory_device[elem];
-                        //console.info(item['Size']);
+                        //console.log(item['Size']);
                         if (item['Size'].indexOf('GB') > -1) {
                             dmi_total += parseFloat(item['Size'].replace('GB', '').trim()) * 1000;
                         }
@@ -311,7 +311,7 @@ module.exports.registerpost = function registerpost(req, res, next) {
     }).then(function () {
         return new Promise(function (resolve, reject) {
             ironic_client.create_node(JSON.stringify(node), function (ret) {
-                console.info('\r\ncreate node:\r\n' + ret);
+                console.log('\r\ncreate node:\r\n' + ret);
                 if (ret && JSON.parse(ret).error_message) {
                     res.setHeader('Content-Type', 'application/json');
                     res.end(ret);
@@ -323,13 +323,13 @@ module.exports.registerpost = function registerpost(req, res, next) {
         });
     }).then(function () {
         port = { 'address': user_entry.port, 'node_uuid': ironic_node.uuid };
-        console.info('\r\nCreate port:\r\n' + JSON.stringify(port));
+        console.log('\r\nCreate port:\r\n' + JSON.stringify(port));
         ironic_client.create_port(JSON.stringify(port), function (create_port) {
         });
     }).then(function () {
         return new Promise(function (resolve, reject) {
             ironic_client.set_power_state(ironic_node.uuid, "on", function (pwr_state) {
-                console.info('\r\npwr_state: on');
+                console.log('\r\npwr_state: on');
                 if (pwr_state && JSON.parse(pwr_state).error_message) {
                     console.error(JSON.parse(pwr_state).error_message);
                     res.setHeader('Content-Type', 'application/json');
@@ -344,15 +344,15 @@ module.exports.registerpost = function registerpost(req, res, next) {
         timer.start = new Date().toJSON();
         timer.finish = new Date().toJSON();
         timer.stop = false;
-        timer.timeInteval = 15000;
+        timer.timeInterval = 15000;
         timer.isDone = true;
         var data = [{ 'path': '/extra/timer', 'value': timer, 'op': 'replace' }];
         ironic_client.patch_node(ironic_node.uuid, JSON.stringify(data), function (result) {
-            console.info('\r\patched node:\r\n' + result);
+            console.log('\r\patched node:\r\n' + result);
         });
     }).then(function () {
         monorail.request_whitelist_set(user_entry.port, function (whitelist) {
-            console.info('\r\nmonorail whitelist:\r\n' + JSON.stringify(whitelist));
+            console.log('\r\nmonorail whitelist:\r\n' + JSON.stringify(whitelist));
             res.setHeader('Content-Type', 'application/json');
             res.end(whitelist);
             return;
@@ -368,7 +368,7 @@ module.exports.unregisterdel = function unregisterdel(req, res, next) {
     ironic.get_client(function (client) {
         client.delete_node(req.swagger.params.identifier.value, function (del_node) {
             if (del_node && JSON.parse(del_node).error_message) {
-                console.info(del_node);
+                console.log(del_node);
                 res.setHeader('Content-Type', 'application/json');
                 res.end(del_node);
                 return;
@@ -376,7 +376,7 @@ module.exports.unregisterdel = function unregisterdel(req, res, next) {
 
             monorail.request_node_get(req.swagger.params.identifier.value, function (onrack_node) {
                 if (onrack_node && !JSON.parse(onrack_node).name) {
-                    console.info(onrack_node);
+                    console.log(onrack_node);
                     res.setHeader('Content-Type', 'application/json');
                     res.end(onrack_node);
                     return;
@@ -407,20 +407,20 @@ module.exports.configsetmono = function configsetmono(req, res, next) {
     var output = JSON.parse(file_content);
     var content = output.monorail;
     var entry = req.body;
-    //console.info(entry);
+    //console.log(entry);
     for (var initem in Object.keys(entry)) {
-        //console.info(Object.keys(entry)[initem]);
+        //console.log(Object.keys(entry)[initem]);
         for (var orgitem in Object.keys(content)) {
-            //console.info(Object.keys(content)[orgitem]);
+            //console.log(Object.keys(content)[orgitem]);
             if (Object.keys(entry)[initem] == Object.keys(content)[orgitem]) {
                 var key = Object.keys(content)[orgitem];
-                //console.info(content[Object.keys(content)[orgitem]]);
+                //console.log(content[Object.keys(content)[orgitem]]);
                 content[key] = entry[key];
                 is_changed = true;
             }
         }
     }
-    //console.info(content);
+    //console.log(content);
     if (is_changed) {
         output.monorail = content;
         fs.writeFileSync(appDir + '/config.json', JSON.stringify(output));
@@ -443,20 +443,20 @@ module.exports.configsetkeystone = function configsetkeystone(req, res, next) {
     var output = JSON.parse(file_content);
     var content = output.keystone;
     var entry = req.body;
-    //console.info(entry);
+    //console.log(entry);
     for (var initem in Object.keys(entry)) {
-        //console.info(Object.keys(entry)[initem]);
+        //console.log(Object.keys(entry)[initem]);
         for (var orgitem in Object.keys(content)) {
-            //console.info(Object.keys(content)[orgitem]);
+            //console.log(Object.keys(content)[orgitem]);
             if (Object.keys(entry)[initem] == Object.keys(content)[orgitem]) {
                 var key = Object.keys(content)[orgitem];
-                //console.info(content[Object.keys(content)[orgitem]]);
+                //console.log(content[Object.keys(content)[orgitem]]);
                 content[key] = entry[key];
                 is_changed = true;
             }
         }
     }
-    //console.info(content);
+    //console.log(content);
     if (is_changed) {
         output.keystone = content;
         fs.writeFileSync(appDir + '/config.json', JSON.stringify(output));
@@ -479,20 +479,20 @@ module.exports.configsetironic = function configsetironic(req, res, next) {
     var output = JSON.parse(file_content);
     var content = output.ironic;
     var entry = req.body;
-    //console.info(entry);
+    //console.log(entry);
     for (var initem in Object.keys(entry)) {
-        //console.info(Object.keys(entry)[initem]);
+        //console.log(Object.keys(entry)[initem]);
         for (var orgitem in Object.keys(content)) {
-            //console.info(Object.keys(content)[orgitem]);
+            //console.log(Object.keys(content)[orgitem]);
             if (Object.keys(entry)[initem] == Object.keys(content)[orgitem]) {
                 var key = Object.keys(content)[orgitem];
-                //console.info(content[Object.keys(content)[orgitem]]);
+                //console.log(content[Object.keys(content)[orgitem]]);
                 content[key] = entry[key];
                 is_changed = true;
             }
         }
     }
-    //console.info(content);
+    //console.log(content);
     if (is_changed) {
         output.ironic = content;
         fs.writeFileSync(appDir + '/config.json', JSON.stringify(output));
@@ -515,20 +515,20 @@ module.exports.configsetglance = function configsetglance(req, res, next) {
     var output = JSON.parse(file_content);
     var content = output.glance;
     var entry = req.body;
-    //console.info(entry);
+    //console.log(entry);
     for (var initem in Object.keys(entry)) {
-        //console.info(Object.keys(entry)[initem]);
+        //console.log(Object.keys(entry)[initem]);
         for (var orgitem in Object.keys(content)) {
-            //console.info(Object.keys(content)[orgitem]);
+            //console.log(Object.keys(content)[orgitem]);
             if (Object.keys(entry)[initem] == Object.keys(content)[orgitem]) {
                 var key = Object.keys(content)[orgitem];
-                //console.info(content[Object.keys(content)[orgitem]]);
+                //console.log(content[Object.keys(content)[orgitem]]);
                 content[key] = entry[key];
                 is_changed = true;
             }
         }
     }
-    //console.info(content);
+    //console.log(content);
     if (is_changed) {
         output.glance = content;
         fs.writeFileSync(appDir + '/config.json', JSON.stringify(output));
@@ -550,20 +550,20 @@ module.exports.configset = function configset(req, res, next) {
     var file_content = fs.readFileSync(appDir + '/config.json');
     var content = JSON.parse(file_content);
     var entry = req.body;
-    //console.info(entry);
+    //console.log(entry);
     for (var initem in Object.keys(entry)) {
-        //console.info(Object.keys(entry)[initem]);
+        //console.log(Object.keys(entry)[initem]);
         for (var orgitem in Object.keys(content)) {
-            //console.info(Object.keys(content)[orgitem]);
+            //console.log(Object.keys(content)[orgitem]);
             if (Object.keys(entry)[initem] == Object.keys(content)[orgitem]) {
                 var key = Object.keys(content)[orgitem];
-                //console.info(content[Object.keys(content)[orgitem]]);
+                //console.log(content[Object.keys(content)[orgitem]]);
                 content[key] = entry[key];
                 is_changed = true;
             }
         }
     }
-    //console.info(content);
+    //console.log(content);
     if (is_changed) {
         fs.writeFileSync(appDir + '/config.json', JSON.stringify(content));
     }
