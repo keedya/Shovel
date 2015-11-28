@@ -95,12 +95,11 @@ var ironicWrapper = {
     set_power_state: function (identifier, state, ret) {
         request.path = pfx + '/nodes/' + identifier + '/states/power';
         if (state === 'off' || state === 'on') {
-            request.data = { target: 'power ' + state }
+            request.data = JSON.stringify({ target: 'power ' + state });
         }
         if (state === 'reboot') {
-            request.data = { target: 'rebooting' };
+            request.data = JSON.stringify({ target: 'rebooting' });
         }
-        request.data = JSON.stringify(request.data);
         client.Put(request, function (node) {
             ret(node);
         });
