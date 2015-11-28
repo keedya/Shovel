@@ -4,7 +4,7 @@ var url = require('url');
 var monorail = require('./../lib/api/monorail/monorail');
 var ironic = require('./../lib/api/openstack/ironic');
 var config = require('./../config.json');
-var promise = require('bluebird')
+var Promise = require('bluebird');
 var glance = require('./../lib/api/openstack/glance');
 
 /*
@@ -48,7 +48,7 @@ module.exports.driversGet = function driversGet(req, res, next) {
 */
 module.exports.ironicnodesGet = function ironicnodesGet(req, res, next) {
     var ironic_client;
-    return new promise(function (resolve, reject) {
+    return new Promise(function (resolve, reject) {
         ironic.get_client(function (client) {
             resolve(client);
             ironic_client = client;
@@ -121,7 +121,6 @@ module.exports.ironicnodePatch = function ironicnodePatch(req, res, next) {
     });
 };
 
-
 /*
 * @api {get} /api/1.1/catalogs/identifier / GET /
 * @apiDescription get catalogs
@@ -186,18 +185,17 @@ module.exports.nodesGet = function nodesGet(req, res, next) {
     });
 };
 
-
 /*
 * @api {get} /api/1.1/nodes/identifier/sel / GET /
 * @apiDescription get specific node by id
 * @apiVersion 1.1.0
 */
-module.exports.GetSELData = function nodeGet(req, res, next) {
+module.exports.GetSELData = function GetSELData(req, res, next) {
     monorail.request_poller_get(req.swagger.params.identifier.value, function (pollers) {
         if (typeof pollers !== 'undefined') {
             pollers = JSON.parse(pollers);
-            for( var i in pollers ) {
-                if( pollers[i]['config']['command'] === 'sel' ) {
+            for (var i in pollers) {
+                if (pollers[i]['config']['command'] === 'sel') {
                     monorail.request_poller_data_get(pollers[i]['id'], function (data) {
                         res.setHeader('Content-Type', 'application/json');
                         res.end(data);
@@ -220,7 +218,7 @@ module.exports.registerpost = function registerpost(req, res, next) {
     var info = {};
     var node = {};
     var propreties = {};
-    var local_gb = {};
+    var local_gb;
     var extra = {};
     var port = {}
     var ironic_client;
@@ -236,18 +234,18 @@ module.exports.registerpost = function registerpost(req, res, next) {
     else {
         info = {};
     }
-    
+
     /* Fill in the extra meta data with some failover and event data */
-    extra = { 'nodeid': user_entry.uuid, 'name': user_entry.name, 'events':{'time':'0'}, 'eventcnt': '0' };
-    if ( typeof user_entry.failovernode !== 'undefined' ) {
+    extra = { 'nodeid': user_entry.uuid, 'name': user_entry.name, 'lsevents': { 'time': 0 }, 'eventcnt': 0, 'timer': {} };
+    if (typeof user_entry.failovernode !== 'undefined') {
         extra['failover'] = user_entry.failovernode;
     }
-    if ( typeof user_entry.eventre !== 'undefined' ) {
+    if (typeof user_entry.eventre !== 'undefined') {
         extra['eventre'] = user_entry.eventre;
     }
 
     local_gb = 0.0;
-    return new promise(function (resolve, reject) {
+    return new Promise(function (resolve, reject) {
         monorail.request_node_get(user_entry.uuid, function (result) {
             if (!JSON.parse(result).name) {
                 res.setHeader('Content-Type', 'application/json');
@@ -270,7 +268,6 @@ module.exports.registerpost = function registerpost(req, res, next) {
             }
         });
         return;
-
     }).then(function () {
         monorail.get_catalog_data_by_source(user_entry.uuid, 'dmi', function (dmi) {
             dmi = JSON.parse(dmi);
@@ -286,7 +283,6 @@ module.exports.registerpost = function registerpost(req, res, next) {
                         }
                         if (item['Size'].indexOf('MB') > -1) {
                             dmi_total += parseFloat(item['Size'].replace('MB', '').trim());
-
                         }
                     }
                 }
@@ -296,25 +292,24 @@ module.exports.registerpost = function registerpost(req, res, next) {
                     'local_gb': local_gb
                 };
             }
-
-            node = { 
-                'name': user_entry.uuid, 
-                'driver': user_entry.driver, 
-                'driver_info': info, 
-                'properties': propreties, 
-                'extra': extra 
+            node = {
+                'name': user_entry.uuid,
+                'driver': user_entry.driver,
+                'driver_info': info,
+                'properties': propreties,
+                'extra': extra
             };
         });
         return;
     }).then(function () {
-        return new promise(function (resolve, reject) {
+        return new Promise(function (resolve, reject) {
             ironic.get_client(function (client) {
                 resolve(client);
                 ironic_client = client;
             });
         });
     }).then(function () {
-        return new promise(function (resolve, reject) {
+        return new Promise(function (resolve, reject) {
             ironic_client.create_node(JSON.stringify(node), function (ret) {
                 console.info('\r\ncreate node:\r\n' + ret);
                 if (ret && JSON.parse(ret).error_message) {
@@ -332,7 +327,7 @@ module.exports.registerpost = function registerpost(req, res, next) {
         ironic_client.create_port(JSON.stringify(port), function (create_port) {
         });
     }).then(function () {
-        return new promise(function (resolve, reject) {
+        return new Promise(function (resolve, reject) {
             ironic_client.set_power_state(ironic_node.uuid, "on", function (pwr_state) {
                 console.info('\r\npwr_state: on');
                 if (pwr_state && JSON.parse(pwr_state).error_message) {
@@ -343,6 +338,17 @@ module.exports.registerpost = function registerpost(req, res, next) {
                 }
                 resolve(pwr_state);
             });
+        });
+    }).then(function () {
+        var timer = {};
+        timer.start = new Date().toJSON();
+        timer.finish = new Date().toJSON();
+        timer.stop = false;
+        timer.timeInteval = 15000;
+        timer.isDone = true;
+        var data = [{ 'path': '/extra/timer', 'value': timer, 'op': 'replace' }];
+        ironic_client.patch_node(ironic_node.uuid, JSON.stringify(data), function (result) {
+            console.info('\r\patched node:\r\n' + result);
         });
     }).then(function () {
         monorail.request_whitelist_set(user_entry.port, function (whitelist) {
@@ -367,6 +373,7 @@ module.exports.unregisterdel = function unregisterdel(req, res, next) {
                 res.end(del_node);
                 return;
             }
+
             monorail.request_node_get(req.swagger.params.identifier.value, function (onrack_node) {
                 if (onrack_node && !JSON.parse(onrack_node).name) {
                     console.info(onrack_node);
