@@ -190,7 +190,7 @@ module.exports.nodesGet = function nodesGet(req, res, next) {
 * @apiDescription get specific node by id
 * @apiVersion 1.1.0
 */
-module.exports.GetSELData = function GetSELData(req, res, next) {
+module.exports.getSeldata = function getSeldata(req, res, next) {
     monorail.request_poller_get(req.swagger.params.identifier.value, function (pollers) {
         if (typeof pollers !== 'undefined') {
             pollers = JSON.parse(pollers);
