@@ -6,6 +6,7 @@ module.exports.startPoller = function startPoller() {
     var ironic_client;
     var timeInterval;
 
+    timeInterval = 20000;
     setInterval(function () {
         return new Promise(function (resolve, reject) {
             ironic.get_client(function (client) {
